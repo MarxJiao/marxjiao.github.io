@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="manifest" href="manifest.json">
+  
+  <title>Vue单元测试case写法 | Hello, I am Marx</title>
+  <meta name="baidu-site-verification" content="fwLK28VV6P" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="书接上文，karma+webpack搭建vue单元测试环境介绍了vue单元测试环境搭建及查看源文件的测试覆盖覆盖率。今天来说一下vue单元测试思路和case的写法。测试框架使用jasmine，语法参考。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vue单元测试case写法">
+<meta property="og:url" content="https://marxjiao.com/2017/01/11/write-vue-unit-test-case/index.html">
+<meta property="og:site_name" content="Hello, I am Marx">
+<meta property="og:description" content="书接上文，karma+webpack搭建vue单元测试环境介绍了vue单元测试环境搭建及查看源文件的测试覆盖覆盖率。今天来说一下vue单元测试思路和case的写法。测试框架使用jasmine，语法参考。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-01-11T06:41:39.000Z">
+<meta property="article:modified_time" content="2022-05-20T15:26:21.893Z">
+<meta property="article:author" content="Marx">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+  <script>
+  var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?f2aece70f9b4d1eb644623e3ddf0dfe1";
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
+  })();
+  </script>
+  
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hello, I am Marx</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/projects">Projects</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+      </nav>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-write-vue-unit-test-case" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/11/write-vue-unit-test-case/" class="article-date">
+  <time datetime="2017-01-11T06:41:39.000Z" itemprop="datePublished">2017-01-11</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Vue单元测试case写法
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>书接上文，<a href="http://marxjiao.com/2017/01/08/karma-webpack-vue-test/">karma+webpack搭建vue单元测试环境</a>介绍了vue单元测试环境搭建及查看源文件的测试覆盖覆盖率。今天来说一下vue单元测试思路和case的写法。测试框架使用jasmine，<a target="_blank" rel="noopener" href="https://jasmine.github.io/2.0/introduction.html">语法参考</a>。</p>
+<span id="more"></span>
+
+<blockquote>
+<p>代码地址：<a target="_blank" rel="noopener" href="https://github.com/MarxJiao/vue-karma-test/tree/spec-demo">https://github.com/MarxJiao/vue-karma-test/tree/spec-demo</a></p>
+</blockquote>
+<h1 id="测试关注点"><a href="#测试关注点" class="headerlink" title="测试关注点"></a>测试关注点</h1><p>对于vue组件，单元测试测试主要关注以下几点：</p>
+<ul>
+<li>vue组件加载后，各数据模型是否符合预期</li>
+<li>定义的方法是否可用</li>
+<li>filter是否可用</li>
+<li>带有props的组件，数据能否正常传递</li>
+<li>异步更新DOM的情况</li>
+</ul>
+<h1 id="组件加载后的状态"><a href="#组件加载后的状态" class="headerlink" title="组件加载后的状态"></a>组件加载后的状态</h1><p>要测试组件加载后的状态，首先我们需要将vue组件生成实例。并检测挂载后实例的数据状态。下面是个示例：</p>
+<p>我们来看下<code>src/app.vue</code>组件的代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">h1</span>&gt;</span>&#123;&#123;title&#125;&#125;<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">vc-message</span> <span class="attr">:message</span>=<span class="string">&quot;message&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">vc-message</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="keyword">import</span> child <span class="keyword">from</span> <span class="string">&#x27;./components/child.vue&#x27;</span></span></span><br><span class="line"><span class="language-javascript">    <span class="keyword">export</span> <span class="keyword">default</span> &#123;</span></span><br><span class="line"><span class="language-javascript">        <span class="title function_">data</span>(<span class="params"></span>) &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="keyword">return</span> &#123;</span></span><br><span class="line"><span class="language-javascript">                <span class="attr">title</span>: <span class="string">&#x27;标题&#x27;</span>,</span></span><br><span class="line"><span class="language-javascript">                <span class="attr">message</span>: <span class="string">&#x27;这是子组件&#x27;</span></span></span><br><span class="line"><span class="language-javascript">            &#125;</span></span><br><span class="line"><span class="language-javascript">        &#125;,</span></span><br><span class="line"><span class="language-javascript">        <span class="attr">components</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="string">&#x27;vc-message&#x27;</span>: child</span></span><br><span class="line"><span class="language-javascript">        &#125;,</span></span><br><span class="line"><span class="language-javascript">        <span class="title function_">mounted</span>(<span class="params"></span>) &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">this</span>.<span class="property">title</span> = <span class="string">&#x27;Hello world&#x27;</span></span></span><br><span class="line"><span class="language-javascript">        &#125;,</span></span><br><span class="line"><span class="language-javascript">        <span class="attr">methods</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="title function_">setMessage</span>(<span class="params">msg</span>) &#123;</span></span><br><span class="line"><span class="language-javascript">                <span class="variable language_">this</span>.<span class="property">message</span> = msg;</span></span><br><span class="line"><span class="language-javascript">            &#125;</span></span><br><span class="line"><span class="language-javascript">        &#125;</span></span><br><span class="line"><span class="language-javascript">    &#125;</span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>组件加载后title的值应该变成’Hello world’，所以我们这样来写测试代码</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用vue</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 引用要测试的组件</span></span><br><span class="line"><span class="keyword">import</span> app <span class="keyword">from</span> <span class="string">&#x27;../../src/app.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 描述要测试的内容</span></span><br><span class="line"><span class="title function_">describe</span>(<span class="string">&#x27;test app.vue&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 描述要测试的最小单元</span></span><br><span class="line">    <span class="title function_">it</span>(<span class="string">&#x27;组件加载后，title应该是Holle world&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 这里将app生成vue实例，并使用 $mount() 模拟挂载状态</span></span><br><span class="line">        <span class="keyword">let</span> vm = <span class="keyword">new</span> <span class="title class_">Vue</span>(app).$mount();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 断言组件的title是否变为了&#x27;Hello world&#x27;</span></span><br><span class="line">        <span class="title function_">expect</span>(vm.<span class="property">title</span>).<span class="title function_">toEqual</span>(<span class="string">&#x27;Hello world&#x27;</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>执行<code>karma start</code>我们能看到测试通过。</p>
+<h1 id="测试组件里面的方法"><a href="#测试组件里面的方法" class="headerlink" title="测试组件里面的方法"></a>测试组件里面的方法</h1><p>我们知道vue将data和methods都挂在了vue实例的根节点下，所以测试vue组件中的方法也和上面测试状态一样，直接调用vm的方法就行了。我们来测试以下<code>setMessage</code>方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用vue</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 引用要测试的组件</span></span><br><span class="line"><span class="keyword">import</span> app <span class="keyword">from</span> <span class="string">&#x27;../../src/app.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 描述要测试的内容</span></span><br><span class="line"><span class="title function_">describe</span>(<span class="string">&#x27;test app.vue&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 描述要测试的最小单元</span></span><br><span class="line">    <span class="title function_">it</span>(<span class="string">&#x27;设置message为『你好世界』&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 这里将app生成vue实例，并使用 $mount() 模拟挂载状态</span></span><br><span class="line">        <span class="keyword">let</span> vm = <span class="keyword">new</span> <span class="title class_">Vue</span>(app).$mount();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 执行setMessage方法</span></span><br><span class="line">        vm.<span class="title function_">setMessage</span>(<span class="string">&#x27;你好世界&#x27;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 断言组件的message是否变为了&#x27;你好世界&#x27;</span></span><br><span class="line">        <span class="title function_">expect</span>(vm.<span class="property">message</span>).<span class="title function_">toEqual</span>(<span class="string">&#x27;你好世界&#x27;</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>执行<code>karma start</code>，就会看到测试成功。如果刚才没有关闭karma的话，在watch模式下，测试会自动进行。</p>
+<p>怎么样？有没有感觉vue单元测试非常简单，赶紧做起来吧。</p>
+<h1 id="filter测试"><a href="#filter测试" class="headerlink" title="filter测试"></a>filter测试</h1><p>filter的测试就更简单了。filter就是纯函数，有固定的输入输出，我们只需要执行函数看预期结果就好了。我们为组件添加一个转换大写的filter:</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">h1</span>&gt;</span>&#123;&#123;title | upperCase&#125;&#125;<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript"><span class="comment">// ...</span></span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="attr">filters</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">        <span class="title function_">upperCase</span>(<span class="params">str</span>) &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="keyword">return</span> str.<span class="title function_">toUpperCase</span>();</span></span><br><span class="line"><span class="language-javascript">        &#125;</span></span><br><span class="line"><span class="language-javascript">    &#125;</span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript"><span class="comment">// ...</span></span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>测试这个filter</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用要测试的组件</span></span><br><span class="line"><span class="keyword">import</span> app <span class="keyword">from</span> <span class="string">&#x27;../../src/app.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 描述要测试的内容</span></span><br><span class="line"><span class="title function_">describe</span>(<span class="string">&#x27;test app.vue&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">it</span>(<span class="string">&#x27;upperCase过滤器能把app转换为APP&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// vue 组件export出来的是个对象，我们直接用这个对象的属性和方发就能调用到要测试的filter</span></span><br><span class="line">        <span class="keyword">let</span> appStr =  app.<span class="property">filters</span>.<span class="title function_">upperCase</span>(<span class="string">&#x27;app&#x27;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 断言组件的appStr是为&#x27;APP&#x27;</span></span><br><span class="line">        <span class="title function_">expect</span>(appStr).<span class="title function_">toEqual</span>(<span class="string">&#x27;APP&#x27;</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h1 id="props测试"><a href="#props测试" class="headerlink" title="props测试"></a>props测试</h1><p>props依赖父组件，这个怎么测试呢。我们来看下<a target="_blank" rel="noopener" href="https://vuejs.org/v2/guide/unit-testing.html#Writing-Testable-Components">vue官方提供的方法</a><br>使用Vue.extend()将组件挂载Vue构造器上，用propsData加入props数据，之后new一个Vue实例，这样就生成了一个独立的带props的vm和前面的实例一样，可以进行各种测试。<br>我们的child组件：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;&#123;message&#125;&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="keyword">export</span> <span class="keyword">default</span> &#123;</span></span><br><span class="line"><span class="language-javascript">        <span class="attr">props</span>: [<span class="string">&#x27;message&#x27;</span>]</span></span><br><span class="line"><span class="language-javascript">    &#125;</span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>测试child组件</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用vue</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 引用要测试的组件</span></span><br><span class="line"><span class="keyword">import</span> child <span class="keyword">from</span> <span class="string">&#x27;../../src/components/child.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 获取生成的vm</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> &#123;<span class="type">Object</span>&#125; Component 组件</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> &#123;<span class="type">Object</span>&#125; propsData props数据</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> &#123;<span class="type">Object</span>&#125; vue实例</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">getRenderedVm</span> (<span class="title class_">Component</span>, propsData) &#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="title class_">Ctor</span> = <span class="title class_">Vue</span>.<span class="title function_">extend</span>(<span class="title class_">Component</span>)</span><br><span class="line">    <span class="keyword">const</span> vm = <span class="keyword">new</span> <span class="title class_">Ctor</span>(&#123; propsData &#125;).$mount()</span><br><span class="line">    <span class="keyword">return</span> vm</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 描述要测试的内容</span></span><br><span class="line"><span class="title function_">describe</span>(<span class="string">&#x27;test child.vue&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 描述要测试的最小单元</span></span><br><span class="line">    <span class="title function_">it</span>(<span class="string">&#x27;组件加载后，child组件的message应该是「这是子组件」&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> childvm = <span class="title function_">getRenderedVm</span>(child, &#123;</span><br><span class="line">            <span class="attr">message</span>: <span class="string">&#x27;这是message&#x27;</span></span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 断言组件的child组件的props是否生效</span></span><br><span class="line">        <span class="title function_">expect</span>(childvm.<span class="property">message</span>).<span class="title function_">toEqual</span>(<span class="string">&#x27;这是message&#x27;</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>是不是so easy.</p>
+<h1 id="异步更新DOM的情况"><a href="#异步更新DOM的情况" class="headerlink" title="异步更新DOM的情况"></a>异步更新DOM的情况</h1><p>异步更新DOM的情况，参考<a target="_blank" rel="noopener" href="https://vuejs.org/v2/guide/unit-testing.html#Asserting-Asynchronous-Updates">vue官网的示例</a><br>使用<code>Vue.nextTick</code>来查看异步数据更新后dom是否变化</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用vue</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 引用要测试的组件</span></span><br><span class="line"><span class="keyword">import</span> app <span class="keyword">from</span> <span class="string">&#x27;../../src/app.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 描述要测试的内容</span></span><br><span class="line"><span class="title function_">describe</span>(<span class="string">&#x27;test app.vue&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 异步数据更新</span></span><br><span class="line">    <span class="title function_">it</span>(<span class="string">&#x27;数据更新后，视图应该改变&#x27;</span>, <span class="function"><span class="params">done</span> =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 这里将app生成vue实例，并使用 $mount() 模拟挂载状态</span></span><br><span class="line">        <span class="keyword">let</span> vm = <span class="keyword">new</span> <span class="title class_">Vue</span>(app).$mount();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 挂载后改变title</span></span><br><span class="line">        vm.<span class="property">title</span> = <span class="string">&#x27;APP&#x27;</span>;</span><br><span class="line"></span><br><span class="line">        <span class="title class_">Vue</span>.<span class="title function_">nextTick</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> title = vm.<span class="property">$el</span>.<span class="title function_">getElementsByTagName</span>(<span class="string">&#x27;h1&#x27;</span>)[<span class="number">0</span>]</span><br><span class="line">            <span class="title function_">expect</span>(title.<span class="property">textContent</span>).<span class="title function_">toEqual</span>(<span class="string">&#x27;APP&#x27;</span>)</span><br><span class="line">            <span class="title function_">done</span>();</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br><span class="line">    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>以上就是对vue组件单元测试的用例编写的介绍，例子举得比较简单，主要是介绍各种情况的测试方法。</p>
+<h1 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h1><p><a target="_blank" rel="noopener" href="http://www.jianshu.com/p/a515fbbdd1b2">karma+webpack搭建vue单元测试环境</a></p>
+<p><a target="_blank" rel="noopener" href="https://cn.vuejs.org/v2/guide/unit-testing.html">Vue官网单元测试介绍</a></p>
+<p><a target="_blank" rel="noopener" href="https://jasmine.github.io/2.0/introduction.html">Jasmine introduction</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://marxjiao.com/2017/01/11/write-vue-unit-test-case/" data-id="cl3emlri00011d0udcid16a2m" class="article-share-link">分享</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/21/angular-json-web-token/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          【翻译】angular使用Json Web Token进行用户验证
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/01/08/karma-webpack-vue-test/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">karma+webpack搭建vue单元测试环境</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cloud/" rel="tag">Cloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Life/" rel="tag">Life</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/angular/" rel="tag">angular</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flex-layout/" rel="tag">flex-layout</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/material/" rel="tag">material</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mock/" rel="tag">mock</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node/" rel="tag">node</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/" rel="tag">react</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/typescript/" rel="tag">typescript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack-plugin/" rel="tag">webpack plugin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B0%8F%E7%A8%8B%E5%BA%8F/" rel="tag">小程序</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Cloud/" style="font-size: 10px;">Cloud</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Life/" style="font-size: 10px;">Life</a> <a href="/tags/angular/" style="font-size: 10px;">angular</a> <a href="/tags/flex-layout/" style="font-size: 10px;">flex-layout</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/material/" style="font-size: 10px;">material</a> <a href="/tags/mock/" style="font-size: 10px;">mock</a> <a href="/tags/node/" style="font-size: 10px;">node</a> <a href="/tags/react/" style="font-size: 20px;">react</a> <a href="/tags/typescript/" style="font-size: 10px;">typescript</a> <a href="/tags/webpack/" style="font-size: 20px;">webpack</a> <a href="/tags/webpack-plugin/" style="font-size: 10px;">webpack plugin</a> <a href="/tags/%E5%B0%8F%E7%A8%8B%E5%BA%8F/" style="font-size: 10px;">小程序</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">八月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/11/03/qnap-docker/">在威联通 NAS 上使用 Docker</a>
+          </li>
+        
+          <li>
+            <a href="/2019/04/03/your-beauty-value/">使用小程序云开发和百度云 AI 接口做了一个颜值测量小程序</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/26/puppeteer-install/">手动下载 Chrome，解决 puppeteer 无法使用问题</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/10/node-webpack/">使用webpack搭建基于typescript的node开发环境</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/16/js-extends/">javascript继承方式对比</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+<!-- ad1 -->
+<ins class="adsbygoogle"
+style="display:block"
+data-ad-client="ca-pub-2718852572240859"
+data-ad-slot="4184044363"
+data-ad-format="auto"
+data-full-width-responsive="true"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 Marx<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/projects" class="mobile-nav-link">Projects</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+  <script>
+  if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+        .register('/sw.js')
+        .then(function() { console.log("Service Worker Registered"); });
+  }
+  </script>
+</body>
+</html>
